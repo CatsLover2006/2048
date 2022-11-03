@@ -1,1 +1,0 @@
-clang++ unix.cpp -v -Os -o 2048

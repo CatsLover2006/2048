@@ -1,5 +1,5 @@
 // 2048 Core Logic
-// By Chance Parsons AKA Half-Qilin AKA Hail
+// By Half-Qilin AKA Hail
 
 #include <stdlib.h>
 
@@ -8,13 +8,10 @@
 namespace game_2048 {
 
 	uint8_t board[4][4];
+	uint8_t largest_numb;
 	bool moved[4][4];
 	bool generated[4][4];
 	unsigned long long score = 0;
-	
-	void setRandom(int seed) {
-		srand(seed);
-	}
 	
 	void addTile() {
 		bool l = false;
@@ -29,6 +26,12 @@ namespace game_2048 {
 				l = true;
 			}
 		}
+	}
+	
+	void setRandom(int seed) {
+		largest_numb = 1;
+		srand(seed);
+		for (int i = 0; i < 2; i++) addTile();
 	}
 	
 	void doMove(int dir) {
@@ -53,6 +56,7 @@ namespace game_2048 {
 							board[i][j] = 0;
 							moved[i][j] = true;
 							j--;
+							if (largest_numb < board[i][j]) largest_numb = board[i][j];
 							score += pow(2, board[i][j]);
 						}
 					}
@@ -88,6 +92,7 @@ namespace game_2048 {
 							board[j][i] = 0;
 							moved[j][i] = true;
 							j--;
+							if (largest_numb < board[j][i]) largest_numb = board[j][i];
 							score += pow(2, board[j][i]);
 						}
 					}
@@ -123,6 +128,7 @@ namespace game_2048 {
 							board[i][j] = 0;
 							moved[i][j] = true;
 							j++;
+							if (largest_numb < board[i][j]) largest_numb = board[i][j];
 							score += pow(2, board[i][j]);
 						}
 					}
@@ -158,6 +164,7 @@ namespace game_2048 {
 							board[j][i] = 0;
 							moved[j][i] = true;
 							j++;
+							if (largest_numb < board[j][i]) largest_numb = board[j][i];
 							score += pow(2, board[j][i]);
 						}
 					}

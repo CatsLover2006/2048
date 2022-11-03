@@ -1,5 +1,5 @@
 // Number Display Math
-// By Chance Parsons AKA Half-Qilin AKA Hail
+// By Half-Qilin AKA Hail
 
 #include <iostream>
 

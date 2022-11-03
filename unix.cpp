@@ -1,5 +1,5 @@
 ﻿// 2048 CLI for Linux/Unix
-// By Chance Parsons AKA Half-Qilin AKA Hail
+// By Half-Qilin AKA Hail
 
 #include <iostream>
 #include <time.h>
@@ -12,7 +12,6 @@ bool end = false;
 
 int main() {
 	game_2048::setRandom(time(NULL));
-	for (int i = 0; i < 2; i++) game_2048::addTile();
 	while(game_2048::gameRunning() && !end) {
 		std::cout << "╔══════╤══════╤══════╤══════╗" << std::endl;
 		for(int i = 0; i < 4; i++) {
