@@ -2,6 +2,11 @@
 !/**/
 !*.*
 *.exe
+*.3dsx
+*.t3s
+*.elf
+*.bcfnt
+*.smdh
 *.gba
 *.nds
 *.o
