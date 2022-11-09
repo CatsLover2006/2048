@@ -219,7 +219,7 @@ namespace game_2048 {
 		return ret;
 	}
 	
-	void doStep(int dir) {
+	bool doStep(int dir) {
 		int tempBoard[4][4];
 		for(int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) {
 			tempBoard[i][j] = board[i][j];
@@ -235,5 +235,6 @@ namespace game_2048 {
 			}
 		}
 		if (!identical) addTile();
+		return !identical;
 	}
 }

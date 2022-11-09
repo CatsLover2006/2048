@@ -2,6 +2,8 @@
 // By Half-Qilin AKA Hail
 
 #include <citro2d.h>
+
+#include <fstream>
 #include <iostream>
 #include <time.h>
 #include <cmath>
@@ -12,7 +14,7 @@
 #define BOTTOM_SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 
-const unsigned int currentSaveVersion = 0;
+const unsigned int currentSaveVersion = 2;
 unsigned int saveVersion = 0; // Save Version Update Handling
 
 static C2D_Font font300;
@@ -65,8 +67,18 @@ void drawScaledTileAtLocation (int xLocation, int yLocation, uint8_t value, floa
         snprintf(val, 6, "2^%u", value);
     }
     C2D_TextFontParse(&numberText, (value>24&&value<31)?font600:font500, numberBuf, val);
-    C2D_DrawText(&numberText, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, xLocation + 24 + 24 * (1-scalingFactor), yLocation + 30 + 24 * (1-scalingFactor), 0.4f, ((value>13&&value<32)?((value>19)?((value>24)?((value>29)?0.32f:0.34f):0.4f):0.48f):0.64f) * scalingFactor, 0.64f * scalingFactor, (value>12)?clrWhite:color[value][1]);
+    C2D_DrawText(&numberText, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, xLocation + 24, yLocation + 24 + 6 * scalingFactor, 0.4f, ((value>13&&value<32)?((value>19)?((value>24)?((value>29)?0.32f:0.34f):0.4f):0.48f):0.64f) * scalingFactor, 0.64f * scalingFactor, (value>12)?clrWhite:color[value][1]);
     C2D_TextBufDelete(numberBuf);
+}
+
+void saveData (unsigned long long highScore, unsigned long winCount) {
+    std::fstream saveFile;
+    saveFile.open("save_hail_2048.txt", std::fstream::out | std::fstream::trunc);
+	unsigned long maxScoreRandomCode = rand();
+	unsigned long winRandomCode = rand();
+    saveFile << std::hex << currentSaveVersion << std::endl << std::hex << (highScore ^ maxScoreRandomCode) << "|" << std::hex
+		<< ~maxScoreRandomCode << std::endl << std::hex << (winCount ^ winRandomCode) << "|" << std::hex << ~winRandomCode;
+    saveFile.close();
 }
 
 int main(int argc, char* argv[]) {
@@ -78,14 +90,11 @@ int main(int argc, char* argv[]) {
     C2D_Prepare();
     srand(time(NULL));
 	
-	// Prepare Game Board
-	game_2048::setRandom(rand());
-	
 	// Other Game Vars
-	unsigned long long highScore;
-	unsigned long winCount;
+	unsigned long long highScore = 0;
+	unsigned long winCount = 0;
 	double animTimer = 0;
-    gameStates cGameState = MAIN;
+    gameStates cGameState = MENU;
         
     // Input Vars
     touchPosition touch;
@@ -130,6 +139,7 @@ int main(int argc, char* argv[]) {
     Result res = cfguInit();
     if (R_SUCCEEDED(res)) {
         CFGU_GetModelNintendo2DS(&wideModifier);
+        wideModifier = 2 - wideModifier;
         cfguExit();
     }
     gfxSetWide(wideModifier == 2);
@@ -139,21 +149,34 @@ int main(int argc, char* argv[]) {
     C3D_RenderTarget * bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
 	
 	// Save Data
-    FILE* saveData = fopen("./saves/hail_2048.txt","r");
-    /*if (saveData != NULL && fscanf(saveData, "%u~", &saveVersion) == 1) {
-    	switch (saveVersion) {
-            case 0: {
-                if (fscanf(saveData, "%llx", &highScore) == 1) {
-                    highScore = ~highScore;
-                }
-                break;
-            }
+	std::fstream log;
+	log.open("save_hail_2048.txt", std::fstream::out | std::fstream::app);
+	log << "0";
+	log.close();
+    FILE * saveFile = fopen ("save_hail_2048.txt", "r");
+    fscanf(saveFile, "%lx", &saveVersion);
+    switch (saveVersion) {
+        case 1: {
+            fscanf(saveFile, "%llx%lx", &highScore, &winCount);
+			highScore = ~highScore;
+			winCount = winCount ^ (highScore&0xffffffff);
+            break;
         }
+		case 2: {
+			unsigned long long maxScoreRandomCode = 0;
+			unsigned long winRandomCode = 0;
+            fscanf(saveFile, "%llx|%llx", &highScore, &maxScoreRandomCode);
+            fscanf(saveFile, "%lx|%lx", &winCount, &winRandomCode);
+			highScore = highScore ^ (~maxScoreRandomCode);
+			winCount = winCount ^ (~winRandomCode);
+		}
     }
-    fclose(saveData);*/
-    saveData = fopen("./saves/hail_2048.txt", "w");
-    fprintf(saveData, "%u~%llx", currentSaveVersion, ~highScore);
-    fclose(saveData);
+    fclose(saveFile);
+    log.open("log_hail_2048.txt", std::fstream::out | std::fstream::trunc);
+    log << "Save Version: " << saveVersion << std::endl
+		<< "High Score: " << highScore << std::endl
+		<< "#Wins: " << winCount << std::endl;
+    bool hasSaved = false;
 	
 	// Main Loop
 	while (aptMainLoop())
@@ -168,11 +191,31 @@ int main(int argc, char* argv[]) {
 		kUp = hidKeysUp();
 		
 		// Exit
-		if (kDown & KEY_START) break;
+		//if (kDown & KEY_START) break;
         
         switch (cGameState) {
+            case MENU: {
+                // Menu Startup Tasks
+                if (!hasSaved) {
+                    // Save Game
+                    if (game_2048::score > highScore) highScore = game_2048::score;
+                    if (game_2048::largest_numb >= 11) winCount++;
+                    saveData(highScore, winCount);
+                    game_2048::score = 0;
+                    game_2048::largest_numb = 1;
+                    // Create Random Game Board
+                    for (int i = 0; i < 4; i++)
+                        for (int j = 0; j < 4; j++)
+                            game_2048::board[i][j] = 0;
+                    game_2048::setRandom(rand());
+                }
+                // Debug: There's no menu rn
+                cGameState = MAIN;
+                break;
+            }
             case MAIN: {
                 // Game Handling
+                bool didStep = false;
                 if (kHeld & KEY_UP) timeHeld[0] += 1 / 60.0f;
                 else timeHeld[0] = 0;
                 if (kHeld & KEY_LEFT) timeHeld[1] += 1 / 60.0f;
@@ -181,26 +224,19 @@ int main(int argc, char* argv[]) {
                 else timeHeld[2] = 0;
                 if (kHeld & KEY_RIGHT) timeHeld[3] += 1 / 60.0f;
                 else timeHeld[3] = 0;
-                if (kDown & KEY_UP || timeHeld[0] > 1) {
-                    game_2048::doStep(1);
-                    animTimer = 0;
+                if (kDown & KEY_UP || timeHeld[0] > 0.33333333333333333333333f) didStep = didStep | game_2048::doStep(1);
+                if (kDown & KEY_LEFT || timeHeld[1] > 0.33333333333333333333333f) didStep = didStep | game_2048::doStep(0);
+                if (kDown & KEY_DOWN || timeHeld[2] > 0.33333333333333333333333f) didStep = didStep | game_2048::doStep(3);
+                if (kDown & KEY_RIGHT || timeHeld[3] > 0.33333333333333333333333f) didStep = didStep | game_2048::doStep(2);
+                if (timeHeld[0] > 0.33333333333333333333333f) timeHeld[0] -= max_time;
+                if (timeHeld[1] > 0.33333333333333333333333f) timeHeld[1] -= max_time;
+                if (timeHeld[2] > 0.33333333333333333333333f) timeHeld[2] -= max_time;
+                if (timeHeld[3] > 0.33333333333333333333333f) timeHeld[3] -= max_time;
+                if (didStep) animTimer = 0;
+                if (animTimer > 1 && !game_2048::gameRunning()) {
+                    hasSaved = false;
+                    cGameState = MENU;
                 }
-                if (kDown & KEY_LEFT || timeHeld[1] > 1) {
-                    game_2048::doStep(0);
-                    animTimer = 0;
-                }
-                if (kDown & KEY_DOWN || timeHeld[2] > 1) {
-                    game_2048::doStep(3);
-                    animTimer = 0;
-                }
-                if (kDown & KEY_RIGHT || timeHeld[3] > 1) {
-                    game_2048::doStep(2);
-                    animTimer = 0;
-                }
-                if (timeHeld[0] > 1) timeHeld[0] -= 0.33333333333333333333333f;
-                if (timeHeld[1] > 1) timeHeld[1] -= 0.33333333333333333333333f;
-                if (timeHeld[2] > 1) timeHeld[2] -= 0.33333333333333333333333f;
-                if (timeHeld[3] > 1) timeHeld[3] -= 0.33333333333333333333333f;
                 break;
             }
         }   
@@ -212,15 +248,14 @@ int main(int argc, char* argv[]) {
 		
 		// Top Screen
 		C2D_SceneBegin(top_main);
-        
-                    uint8_t tMoved[4][4];
-                    uint8_t target[4][4][2];
         switch (cGameState) {
             case MAIN: {
                 C2D_DrawRectSolid(SCREEN_WIDTH/2 - 101, SCREEN_HEIGHT/2 - 101, 0.1f, 202, 202, clrWhite);
                 // Draw Board
                 if (animTimer < max_time) {
                     // Animate
+                    uint8_t tMoved[4][4];
+                    uint8_t target[4][4][2];
                     for (int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) {
                         tMoved[i][j] = game_2048::moved[i][j];
                         target[i][j][0] = i;
@@ -316,6 +351,14 @@ int main(int argc, char* argv[]) {
     C2D_Fini();
     C3D_Fini();
     gfxExit();
+    
+    // Save Before Exiting
+    if (game_2048::score > highScore) highScore = game_2048::score;
+    if (game_2048::largest_numb >= 11) winCount++;
+    saveData(highScore, winCount);
+	
+	// End Log
+    log.close();
 	
 	// Exit ROM
     romfsExit();
