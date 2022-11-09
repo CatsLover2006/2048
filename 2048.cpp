@@ -8,8 +8,10 @@
 namespace game_2048 {
 
 	uint8_t board[4][4];
+	uint8_t oldBoard[4][4];
 	uint8_t largest_numb;
-	bool moved[4][4];
+	int moved[4][4];
+	int lastMovement;
 	bool generated[4][4];
 	unsigned long long score = 0;
 	
@@ -35,7 +37,11 @@ namespace game_2048 {
 	}
 	
 	void doMove(int dir) {
-		for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) moved[i][j] = false;
+		lastMovement = dir;
+		for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) {
+			oldBoard[i][j] = board[i][j];
+			moved[i][j] = 0;
+		}
 		switch(dir) {
 			case 1: {
 				for(int i = 0; i < 4; i++) {
@@ -45,7 +51,7 @@ namespace game_2048 {
 						if (board[i][j-1] == 0) {
 							board[i][j-1] = board[i][j];
 							board[i][j] = 0;
-							moved[i][j] = true;
+							moved[i][j]++;
 							j--;
 						}
 					}
@@ -54,7 +60,7 @@ namespace game_2048 {
 						if (board[i][j-1] == board[i][j]) {
 							board[i][j-1]++;
 							board[i][j] = 0;
-							moved[i][j] = true;
+							moved[i][j]++;
 							j--;
 							if (largest_numb < board[i][j]) largest_numb = board[i][j];
 							score += pow(2, board[i][j]);
@@ -66,7 +72,7 @@ namespace game_2048 {
 						if (board[i][j-1] == 0) {
 							board[i][j-1] = board[i][j];
 							board[i][j] = 0;
-							moved[i][j] = true;
+							moved[i][j]++;
 							j--;
 						}
 					}
@@ -81,7 +87,7 @@ namespace game_2048 {
 						if (board[j-1][i] == 0) {
 							board[j-1][i] = board[j][i];
 							board[j][i] = 0;
-							moved[j][i] = true;
+							moved[j][i]++;
 							j--;
 						}
 					}
@@ -90,7 +96,7 @@ namespace game_2048 {
 						if (board[j-1][i] == board[j][i]) {
 							board[j-1][i]++;
 							board[j][i] = 0;
-							moved[j][i] = true;
+							moved[j][i]++;
 							j--;
 							if (largest_numb < board[j][i]) largest_numb = board[j][i];
 							score += pow(2, board[j][i]);
@@ -102,7 +108,7 @@ namespace game_2048 {
 						if (board[j-1][i] == 0) {
 							board[j-1][i] = board[j][i];
 							board[j][i] = 0;
-							moved[j][i] = true;
+							moved[j][i]++;
 							j--;
 						}
 					}
@@ -117,7 +123,7 @@ namespace game_2048 {
 						if (board[i][j+1] == 0) {
 							board[i][j+1] = board[i][j];
 							board[i][j] = 0;
-							moved[i][j] = true;
+							moved[i][j]++;
 							j++;
 						}
 					}
@@ -126,7 +132,7 @@ namespace game_2048 {
 						if (board[i][j+1] == board[i][j]) {
 							board[i][j+1]++;
 							board[i][j] = 0;
-							moved[i][j] = true;
+							moved[i][j]++;
 							j++;
 							if (largest_numb < board[i][j]) largest_numb = board[i][j];
 							score += pow(2, board[i][j]);
@@ -138,7 +144,7 @@ namespace game_2048 {
 						if (board[i][j+1] == 0) {
 							board[i][j+1] = board[i][j];
 							board[i][j] = 0;
-							moved[i][j] = true;
+							moved[i][j]++;
 							j++;
 						}
 					}
@@ -153,7 +159,7 @@ namespace game_2048 {
 						if (board[j+1][i] == 0) {
 							board[j+1][i] = board[j][i];
 							board[j][i] = 0;
-							moved[j][i] = 2;
+							moved[j][i]++;
 							j++;
 						}
 					}
@@ -162,7 +168,7 @@ namespace game_2048 {
 						if (board[j+1][i] == board[j][i]) {
 							board[j+1][i]++;
 							board[j][i] = 0;
-							moved[j][i] = true;
+							moved[j][i]++;
 							j++;
 							if (largest_numb < board[j][i]) largest_numb = board[j][i];
 							score += pow(2, board[j][i]);
@@ -174,7 +180,7 @@ namespace game_2048 {
 						if (board[j+1][i] == 0) {
 							board[j+1][i] = board[j][i];
 							board[j][i] = 0;
-							moved[j][i] = true;
+							moved[j][i]++;
 							j++;
 						}
 					}
