@@ -77,7 +77,7 @@ void saveData (unsigned long long highScore, unsigned long winCount) {
 	unsigned long maxScoreRandomCode = rand();
 	unsigned long winRandomCode = rand();
     saveFile << std::hex << currentSaveVersion << std::endl << std::hex << (highScore ^ maxScoreRandomCode) << "|" << std::hex
-		<< ~maxScoreRandomCode << std::endl << std::hex << (winCount ^ winRandomCode) << "|" << std::hex << ~winRandomCode;
+		<< ~maxScoreRandomCode << std::endl << std::hex << (winCount ^ winRandomCode) << "|" << std::hex << winRandomCode << "|";
     saveFile.close();
 }
 
@@ -163,12 +163,13 @@ int main(int argc, char* argv[]) {
             break;
         }
 		case 2: {
-			unsigned long long maxScoreRandomCode = 0;
+			unsigned long maxScoreRandomCode = 0;
 			unsigned long winRandomCode = 0;
-            fscanf(saveFile, "%llx|%llx", &highScore, &maxScoreRandomCode);
+            fscanf(saveFile, "%llx|%lx", &highScore, &maxScoreRandomCode);
             fscanf(saveFile, "%lx|%lx", &winCount, &winRandomCode);
 			highScore = highScore ^ (~maxScoreRandomCode);
-			winCount = winCount ^ (~winRandomCode);
+			winCount = winCount ^ winRandomCode;
+			break;
 		}
     }
     fclose(saveFile);
