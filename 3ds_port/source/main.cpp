@@ -189,10 +189,7 @@ int main(int argc, char* argv[]) {
         hidTouchRead(&touch);
 		kDown = hidKeysDown();
 		kHeld = hidKeysHeld();
-		kUp = hidKeysUp();
-		
-		// Exit
-		//if (kDown & KEY_START) break;
+		kUp = hidKeysUp();		
         
         switch (cGameState) {
             case MENU: {
@@ -210,6 +207,8 @@ int main(int argc, char* argv[]) {
                             game_2048::board[i][j] = 0;
                     game_2048::setRandom(rand());
                 }
+				// Exit
+				if (kDown & KEY_START) break;
                 // Debug: There's no menu rn
                 cGameState = MAIN;
                 break;
