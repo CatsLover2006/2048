@@ -1,6 +1,7 @@
 *
 !/**/
 !*.*
+!makefile
 *.exe
 *.3dsx
 *.t3s
