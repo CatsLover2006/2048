@@ -5,11 +5,11 @@ My implementation of 2048 (with code for many platforms)
 - Unix/Linux CLI
 #### Partial Support:  
 - Windows/DOS CLI
+- Nintendo 3DS  
 #### Planned Support:  
 - GTK3  
 - macOS  
-- Windows  
-- Nintendo 3DS  
+- Windows
 - Nintendo DS  
 - Nintendo GBA  
 - Nintendo Switch  
